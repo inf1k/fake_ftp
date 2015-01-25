@@ -41,6 +41,12 @@ module FakeFtp
       @files = []
       @mode = :active
       @path = "/pub"
+
+      @users = {}
+    end
+
+    def add_user(login, password)
+      @users[login] = password
     end
 
     def files
@@ -195,7 +201,11 @@ module FakeFtp
     end
 
     def _pass(*args)
-      '230 logged in'
+      if @current_user.present? && !@users[@current_user].present?
+        '502 Not logged in'
+      else
+        '230 logged in'
+      end
     end
 
     def _pasv(*args)
@@ -307,7 +317,12 @@ module FakeFtp
     end
 
     def _user(name = '')
-      (name.to_s == 'anonymous') ? '230 logged in' : '331 send your password'
+      if name.to_s == 'anonymous'
+        '230 logged in'
+      else
+        @current_user = name.to_s
+        '331 send your password'
+      end
     end
 
     def _mkd(directory)
